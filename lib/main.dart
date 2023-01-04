@@ -2,6 +2,7 @@ import 'package:blizzard/blizzard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const BlizzardApp());
@@ -86,19 +87,47 @@ class RenderSnowBlizzard extends RenderProxyBox {
     super.attach(owner);
     _ticker = vsync.createTicker(_onTick);
     _ticker.start();
+    RawKeyboard.instance.addListener(_onKeyPressed);
   }
 
   @override
   void detach() {
+    RawKeyboard.instance.removeListener(_onKeyPressed);
     _ticker.stop();
     super.detach();
   }
 
   Duration _elapsed = Duration.zero;
+  bool _moveForwards = false;
+  bool _moveBackwards = false;
 
   void _onTick(Duration elapsed) {
+    final elapsedDelta = (elapsed - _elapsed).inMicroseconds / Duration.microsecondsPerSecond;
+    if(_moveForwards) {
+      blizzard.moveForward(elapsedDelta);
+    }
+    else if(_moveBackwards) {
+      blizzard.moveBackwards(elapsedDelta);
+    }
     _elapsed = elapsed;
     markNeedsPaint();
+  }
+
+  void _onKeyPressed(RawKeyEvent event) {
+    if(event is RawKeyDownEvent) {
+      if(event.logicalKey == LogicalKeyboardKey.keyW) {
+        _moveForwards = true;
+      }else if(event.logicalKey == LogicalKeyboardKey.keyS) {
+        _moveBackwards = true;
+      }
+    }
+    else if(event is RawKeyUpEvent) {
+       if(event.logicalKey == LogicalKeyboardKey.keyW) {
+        _moveForwards = false;
+      }else if(event.logicalKey == LogicalKeyboardKey.keyS) {
+        _moveBackwards = false;
+      }
+    }
   }
 
   @override
