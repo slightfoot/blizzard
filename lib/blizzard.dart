@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart' as flutter;
 import 'package:vector_math/vector_math_64.dart';
 
 const uiWhite = ui.Color(0xFFFFFFFF);
@@ -45,19 +46,20 @@ class Blizzard {
     const maxSpeed = 10.0;
 
     canvas.save();
-    canvas.scale(size.width * 0.5, size.height * 0.5);
-    canvas.translate(1.0, 1.0);
+    canvas.scale(size.width, size.height);
+    canvas.translate(0.5, 0.5);
     canvas.scale(1.0, -1.0);
 
     final viewMatrix = makeCameraMatrix();
     final paint = ui.Paint()..color = uiWhite;
+    int clip = 0;
     for (int i = 0; i < 600; i++) {
       final origin = Vector3(
-            random.nextDouble() * 5.0,
+            random.nextDouble() * 3.0,
             random.nextDouble(),
-            random.nextDouble() * 10.0,
+            random.nextDouble() * 3.0,
           ) -
-          Vector3(2.5, 0.5, 0.0);
+          Vector3(1.5, 0.5, 0.0);
 
       final speed = range(minSpeed, maxSpeed);
       final waves = range(5, 10);
@@ -65,20 +67,20 @@ class Blizzard {
       final y = ((origin.y + (elapsedSeconds / speed)) % 1.0) - 0.5;
       final x = origin.x + sin(y * pi * waves) * amp;
 
-      final animated = Vector3(x, y, origin.z);
+      final animated = viewMatrix.transform3(Vector3(x, y, origin.z));
+      if (animated.z < 0.0) {
+        clip++;
+        continue;
+      }
 
-      final pos = projection.perspectiveTransform(viewMatrix.transform3(animated));
-
+      final pos = projection.perspectiveTransform(animated.xyz);
       final distance = (pos.z - 1.0);
-
-      //paint.color = ui.Color.fromRGBO(
-      //  0xFF,
-      //  0xFF,
-      //  0xFF,
-      //  (distance * 3.0).clamp(0.0, 1.0),
-      //);
+      final opacity = flutter.Curves.easeInCubic //
+          .transform((distance * 4.0).clamp(0.0, 1.0));
+      paint.color = ui.Color.fromRGBO(0xFF, 0xFF, 0xFF, opacity);
       canvas.drawCircle(ui.Offset(pos.x, pos.y), distance * 0.05, paint);
     }
+    //print('clipped $clip');
 
     canvas.restore();
   }

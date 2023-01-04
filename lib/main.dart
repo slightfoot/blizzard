@@ -33,7 +33,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    return SnowBlizzard(vsync: this);
+    return SizedBox.expand(
+      child: Center(
+        child: ClipRect(
+          child: AspectRatio(
+            aspectRatio: 1.0,
+            child: SnowBlizzard(vsync: this),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -109,6 +118,7 @@ class RenderSnowBlizzard extends RenderProxyBox {
     else if(_moveBackwards) {
       blizzard.moveBackwards(elapsedDelta);
     }
+    // RawKeyboard.instance.keysPressed[];
     _elapsed = elapsed;
     markNeedsPaint();
   }
