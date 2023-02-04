@@ -34,14 +34,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
-      child: Center(
-        child: ClipRect(
-          child: AspectRatio(
-            aspectRatio: 1.0,
-            child: SnowBlizzard(vsync: this),
-          ),
-        ),
-      ),
+      child: SnowBlizzard(vsync: this),
     );
   }
 }
@@ -109,33 +102,47 @@ class RenderSnowBlizzard extends RenderProxyBox {
   Duration _elapsed = Duration.zero;
   bool _moveForwards = false;
   bool _moveBackwards = false;
+  bool _moveLeft = false;
+  bool _moveRight = false;
 
   void _onTick(Duration elapsed) {
     final elapsedDelta = (elapsed - _elapsed).inMicroseconds / Duration.microsecondsPerSecond;
-    if(_moveForwards) {
+    if (_moveForwards) {
       blizzard.moveForward(elapsedDelta);
-    }
-    else if(_moveBackwards) {
+    } else if (_moveBackwards) {
       blizzard.moveBackwards(elapsedDelta);
     }
-    // RawKeyboard.instance.keysPressed[];
+    if (_moveLeft) {
+      blizzard.moveLeft(elapsedDelta);
+    } else if (_moveRight) {
+      blizzard.moveRight(elapsedDelta);
+    }
     _elapsed = elapsed;
     markNeedsPaint();
   }
 
   void _onKeyPressed(RawKeyEvent event) {
-    if(event is RawKeyDownEvent) {
-      if(event.logicalKey == LogicalKeyboardKey.keyW) {
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW) {
         _moveForwards = true;
-      }else if(event.logicalKey == LogicalKeyboardKey.keyS) {
+      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
         _moveBackwards = true;
       }
-    }
-    else if(event is RawKeyUpEvent) {
-       if(event.logicalKey == LogicalKeyboardKey.keyW) {
+      if (event.logicalKey == LogicalKeyboardKey.keyA) {
+        _moveLeft = true;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+        _moveRight = true;
+      }
+    } else if (event is RawKeyUpEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW) {
         _moveForwards = false;
-      }else if(event.logicalKey == LogicalKeyboardKey.keyS) {
+      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
         _moveBackwards = false;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.keyA) {
+        _moveLeft = false;
+      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
+        _moveRight = false;
       }
     }
   }
@@ -152,17 +159,17 @@ class RenderSnowBlizzard extends RenderProxyBox {
       canvas.save();
       canvas.translate(size.width * 0.25, size.height * 0.25);
       canvas.scale(0.5, 0.5);
-      final border = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 10.0
-        ..color = Colors.cyanAccent;
-      canvas.drawRect(offset & size, border);
     }
 
     final elapsedSeconds = _elapsed.inMicroseconds / Duration.microsecondsPerSecond;
     blizzard.paint(canvas, size, elapsedSeconds);
 
     if (debugPaintSizeEnabled) {
+      final border = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10.0
+        ..color = Colors.cyanAccent;
+      canvas.drawRect(offset & size, border);
       canvas.restore();
     }
   }
