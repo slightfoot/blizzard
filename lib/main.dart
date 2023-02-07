@@ -62,7 +62,9 @@ class SnowBlizzard extends SingleChildRenderObjectWidget {
 class RenderSnowBlizzard extends RenderProxyBox {
   RenderSnowBlizzard({
     required TickerProvider vsync,
-  }) : _vsync = vsync;
+  }) : _vsync = vsync {
+    blizzard.setup();
+  }
 
   final blizzard = Blizzard();
   late Ticker _ticker;
@@ -108,14 +110,14 @@ class RenderSnowBlizzard extends RenderProxyBox {
   void _onTick(Duration elapsed) {
     final elapsedDelta = (elapsed - _elapsed).inMicroseconds / Duration.microsecondsPerSecond;
     if (_moveForwards) {
-      blizzard.moveForward(elapsedDelta);
+      blizzard.camera.moveForward(elapsedDelta);
     } else if (_moveBackwards) {
-      blizzard.moveBackwards(elapsedDelta);
+      blizzard.camera.moveBackwards(elapsedDelta);
     }
     if (_moveLeft) {
-      blizzard.moveLeft(elapsedDelta);
+      blizzard.camera.moveLeft(elapsedDelta);
     } else if (_moveRight) {
-      blizzard.moveRight(elapsedDelta);
+      blizzard.camera.moveRight(elapsedDelta);
     }
     _elapsed = elapsed;
     markNeedsPaint();
