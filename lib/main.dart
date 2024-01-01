@@ -153,8 +153,8 @@ class RenderSnowBlizzard extends RenderProxyBox {
 
     if (debugPaintSizeEnabled) {
       canvas.save();
-      canvas.translate(size.width * 0.25, size.height * 0.25);
-      canvas.scale(0.5, 0.5);
+      canvas.translate(size.width * 0.125, size.height * 0.125);
+      canvas.scale(0.75, 0.75);
     }
 
     final elapsedSeconds = _elapsed.inMicroseconds / Duration.microsecondsPerSecond;
@@ -163,7 +163,7 @@ class RenderSnowBlizzard extends RenderProxyBox {
     if (debugPaintSizeEnabled) {
       final border = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 10.0
+        ..strokeWidth = 3.0
         ..color = Colors.cyanAccent;
       canvas.drawRect(offset & size, border);
       canvas.restore();
@@ -183,21 +183,19 @@ class InputManager {
   bool moveRight = false;
 
   KeyEventResult onKeyEvent(FocusNode node, KeyEvent event) {
-    final isPressed = event is KeyDownEvent;
+    final isPressed = event is! KeyUpEvent;
     switch (event.logicalKey) {
       case LogicalKeyboardKey.keyW:
         moveForwards = isPressed;
-        return KeyEventResult.handled;
       case LogicalKeyboardKey.keyS:
         moveBackwards = isPressed;
-        return KeyEventResult.handled;
       case LogicalKeyboardKey.keyA:
         moveLeft = isPressed;
-        return KeyEventResult.handled;
       case LogicalKeyboardKey.keyD:
         moveRight = isPressed;
-        return KeyEventResult.handled;
+      default:
+        return KeyEventResult.ignored;
     }
-    return KeyEventResult.ignored;
+    return KeyEventResult.handled;
   }
 }
