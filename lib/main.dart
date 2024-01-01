@@ -146,6 +146,9 @@ class RenderSnowBlizzard extends RenderProxyBox {
 
     final canvas = context.canvas;
 
+    // Paint our background black
+    canvas.drawRect(offset & size, Paint()..color = Colors.black);
+
     blizzard.debugEnabled = debugPaintSizeEnabled;
 
     if (debugPaintSizeEnabled) {
