@@ -31,42 +31,65 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+  final inputManager = InputManager();
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: SnowBlizzard(vsync: this),
+    return Focus(
+      autofocus: true,
+      onKeyEvent: inputManager.onKeyEvent,
+      child: SizedBox.expand(
+        child: SnowBlizzard(
+          inputManager: inputManager,
+          vsync: this,
+        ),
+      ),
     );
   }
 }
 
-class SnowBlizzard extends SingleChildRenderObjectWidget {
+class SnowBlizzard extends LeafRenderObjectWidget {
   const SnowBlizzard({
     super.key,
-    super.child,
+    required this.inputManager,
     required this.vsync,
   });
 
+  final InputManager inputManager;
   final TickerProvider vsync;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return RenderSnowBlizzard(vsync: vsync);
+    return RenderSnowBlizzard(inputManager: inputManager, vsync: vsync);
   }
 
   @override
   void updateRenderObject(BuildContext context, covariant RenderSnowBlizzard renderObject) {
-    renderObject.vsync = vsync;
+    renderObject
+      ..inputManager = inputManager
+      ..vsync = vsync;
   }
 }
 
 class RenderSnowBlizzard extends RenderProxyBox {
   RenderSnowBlizzard({
+    required InputManager inputManager,
     required TickerProvider vsync,
-  }) : _vsync = vsync {
+  })  : _inputManager = inputManager,
+        _vsync = vsync {
     blizzard.setup();
   }
 
   final blizzard = Blizzard();
+
+  late InputManager _inputManager;
+
+  InputManager get inputManager => _inputManager;
+
+  set inputManager(InputManager value) {
+    _inputManager = inputManager;
+  }
+
   late Ticker _ticker;
 
   TickerProvider? _vsync;
@@ -91,62 +114,30 @@ class RenderSnowBlizzard extends RenderProxyBox {
     super.attach(owner);
     _ticker = vsync.createTicker(_onTick);
     _ticker.start();
-    RawKeyboard.instance.addListener(_onKeyPressed);
   }
 
   @override
   void detach() {
-    RawKeyboard.instance.removeListener(_onKeyPressed);
     _ticker.stop();
     super.detach();
   }
 
   Duration _elapsed = Duration.zero;
-  bool _moveForwards = false;
-  bool _moveBackwards = false;
-  bool _moveLeft = false;
-  bool _moveRight = false;
 
   void _onTick(Duration elapsed) {
     final elapsedDelta = (elapsed - _elapsed).inMicroseconds / Duration.microsecondsPerSecond;
-    if (_moveForwards) {
+    if (inputManager.moveForwards) {
       blizzard.camera.moveForward(elapsedDelta);
-    } else if (_moveBackwards) {
+    } else if (inputManager.moveBackwards) {
       blizzard.camera.moveBackwards(elapsedDelta);
     }
-    if (_moveLeft) {
+    if (inputManager.moveLeft) {
       blizzard.camera.moveLeft(elapsedDelta);
-    } else if (_moveRight) {
+    } else if (inputManager.moveRight) {
       blizzard.camera.moveRight(elapsedDelta);
     }
     _elapsed = elapsed;
     markNeedsPaint();
-  }
-
-  void _onKeyPressed(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.keyW) {
-        _moveForwards = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
-        _moveBackwards = true;
-      }
-      if (event.logicalKey == LogicalKeyboardKey.keyA) {
-        _moveLeft = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
-        _moveRight = true;
-      }
-    } else if (event is RawKeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.keyW) {
-        _moveForwards = false;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyS) {
-        _moveBackwards = false;
-      }
-      if (event.logicalKey == LogicalKeyboardKey.keyA) {
-        _moveLeft = false;
-      } else if (event.logicalKey == LogicalKeyboardKey.keyD) {
-        _moveRight = false;
-      }
-    }
   }
 
   @override
@@ -174,5 +165,36 @@ class RenderSnowBlizzard extends RenderProxyBox {
       canvas.drawRect(offset & size, border);
       canvas.restore();
     }
+  }
+
+  @override
+  bool hitTestSelf(Offset position) => true;
+}
+
+class InputManager {
+  InputManager();
+
+  bool moveForwards = false;
+  bool moveBackwards = false;
+  bool moveLeft = false;
+  bool moveRight = false;
+
+  KeyEventResult onKeyEvent(FocusNode node, KeyEvent event) {
+    final isPressed = event is KeyDownEvent;
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.keyW:
+        moveForwards = isPressed;
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyS:
+        moveBackwards = isPressed;
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyA:
+        moveLeft = isPressed;
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyD:
+        moveRight = isPressed;
+        return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 }
